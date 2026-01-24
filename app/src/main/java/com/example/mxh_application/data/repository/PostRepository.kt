@@ -87,7 +87,8 @@ class PostRepository @Inject constructor(
         }
     }
     
-    // Search posts - ưu tiên API, luôn gộp thêm kết quả local (bao gồm bài viết mới tạo chỉ có ở DB)
+    // Search posts - gọi API, fallback local nếu offline
+    // Approach: Online search API (toàn bộ), Offline search local cache
     fun searchPosts(query: String): Flow<Resource<List<PostEntity>>> = flow {
         val trimmed = query.trim()
         emit(Resource.Loading())
@@ -98,9 +99,6 @@ class PostRepository @Inject constructor(
         }
         
         try {
-            val localResults = postDao.searchPostsOneTime(trimmed)
-
-            // API search (có thể không trả về bài post mới tạo trên DummyJson)
             try {
                 val apiResponse = api.searchPosts(trimmed, limit = 100, skip = 0)
                 val apiResults = apiResponse.posts
@@ -109,19 +107,15 @@ class PostRepository @Inject constructor(
                         post.title?.lowercase()?.contains(q) == true
                     }
                     .toEntityList()
-
+                
                 if (apiResults.isNotEmpty()) {
                     postDao.insertPosts(apiResults)
                 }
-
-                // Gộp API + local, loại trùng theo id
-                val merged = (apiResults + localResults).distinctBy { it.id }
-                if (merged.isNotEmpty()) {
-                    emit(Resource.Success(merged))
-                } else {
-                    emit(Resource.Error("Không tìm thấy kết quả"))
-                }
+                
+                emit(Resource.Success(apiResults))
             } catch (apiError: Exception) {
+                val localResults = postDao.searchPostsOneTime(trimmed)
+                
                 if (localResults.isNotEmpty()) {
                     emit(Resource.Success(localResults))
                 } else {
