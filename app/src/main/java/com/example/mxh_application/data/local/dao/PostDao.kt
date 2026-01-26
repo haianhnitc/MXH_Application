@@ -12,11 +12,11 @@ import kotlinx.coroutines.flow.Flow
 interface PostDao {
     
     // Lấy tất cả posts với Paging 3
-    @Query("SELECT * FROM posts ORDER BY createdAt DESC")
+    @Query("SELECT * FROM posts ORDER BY id ASC")
     fun getAllPostsPaging(): PagingSource<Int, PostEntity>
     
      // Lấy tất cả posts dạng Flow
-    @Query("SELECT * FROM posts ORDER BY createdAt DESC")
+    @Query("SELECT * FROM posts ORDER BY id ASC")
     fun getAllPostsFlow(): Flow<List<PostEntity>>
     
      // Lấy post theo id
@@ -28,22 +28,22 @@ interface PostDao {
     fun getPostByIdFlow(postId: Int): Flow<PostEntity?>
     
      // Lấy tất cả posts của một user với Paging 3
-    @Query("SELECT * FROM posts WHERE userId = :userId ORDER BY createdAt DESC")
+    @Query("SELECT * FROM posts WHERE userId = :userId ORDER BY id ASC")
     fun getPostsByUserPaging(userId: Int): PagingSource<Int, PostEntity>
     
     // Lấy tất cả posts của một user dạng Flow
-    @Query("SELECT * FROM posts WHERE userId = :userId ORDER BY createdAt DESC")
+    @Query("SELECT * FROM posts WHERE userId = :userId ORDER BY id ASC")
     fun getPostsByUserFlow(userId: Int): Flow<List<PostEntity>>
 
     // Lấy tất cả posts của một user (one-shot)
-    @Query("SELECT * FROM posts WHERE userId = :userId ORDER BY createdAt DESC")
+    @Query("SELECT * FROM posts WHERE userId = :userId ORDER BY id ASC")
     suspend fun getPostsByUserOneTime(userId: Int): List<PostEntity>
     
      // Tìm kiếm posts theo tiêu đề (PagingSource)
     @Query("""
         SELECT * FROM posts 
         WHERE title LIKE '%' || :query || '%' 
-        ORDER BY createdAt DESC
+        ORDER BY id ASC
     """)
     fun searchPosts(query: String): PagingSource<Int, PostEntity>
 
@@ -51,7 +51,7 @@ interface PostDao {
     @Query("""
         SELECT * FROM posts 
         WHERE title LIKE '%' || :query || '%' 
-        ORDER BY createdAt DESC
+        ORDER BY id ASC
     """)
     suspend fun searchPostsOneTime(query: String): List<PostEntity>
     
@@ -59,7 +59,7 @@ interface PostDao {
     @Query("""
         SELECT * FROM posts 
         WHERE tags LIKE '%' || :tag || '%'
-        ORDER BY createdAt DESC
+        ORDER BY id ASC
     """)
     fun getPostsByTag(tag: String): PagingSource<Int, PostEntity>
     
