@@ -30,7 +30,7 @@ Prompt: "Có nên tạo 1 file chuyên để xử lí trạng thái khi gọi AP
 
 Prompt: "Tại sao phải bắt trạng thái loading , có thể dùng 1 biến có thể thay đổi trạng thái để theo dõi thay vì tạo thêm Loading cho file xử lí trạng thái được không ? có cần xử lí các trạng thái khác về API như 500, 404,.... hay không ? Giải thích chi tiết lợi ích mang lại khi tạo thêm state loading"
 
-Prompt: "thực hiện tạo navigation setup và tạo tất cả các screen theo yêu cầu sao cho thỏa mãn các yêu cầu dự án đồng thời tham chiếu vào các đầu api, các hàm trong repository của tôi đã tạo để thực hiện tạo giao diện phù hợp. + paste yêu cầu app"
+Prompt: "thực hiện tạo navigation setup và tạo tất cả các screen theo yêu cầu sao cho thỏa mãn các yêu cầu dự án đồng thời tham chiếu vào các đầu api, các hàm trong repository của tôi đã tạo để thực hiện tạo giao diện phù hợp. Tham khảo màn hình quản lí 1 danh sách các item cơ bản như trong ảnh. + paste yêu cầu app + paste ảnh minh họa màn userlist"
 
 Prompt: "Việc tạo thủ công singleton cho AppDatabase là không cần thiết, hilt đã tự tạo rồi, ngoài ra bạn đang set tên của database trong DatabaseModule và AppDatabase khác nhau, nó có thể gây ra lỗi cho dự án của tôi. Giúp tôi xem xét đề xuất trên, chỉ rõ việc hilt đã tạo singleton tự động cho AppDatabase ở vị trí nào."
 

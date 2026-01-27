@@ -171,15 +171,15 @@ class PostViewModel @Inject constructor(
         }
     }
 
-    fun searchPosts(query: String) {
-        val trimmed = query.trim()
-
+    private fun launchSearch(trimmed: String, debounceMs: Long = 0L) {
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
+            if (debounceMs > 0) delay(debounceMs)
+
             currentUserId = null
             observePosts(userId = null)
             currentSkip = 0
-            _postListState.update { it.copy(hasMoreData = true, totalCount = null) }  // Reset flag
+            _postListState.update { it.copy(hasMoreData = true, totalCount = null) }
 
             if (trimmed.isEmpty()) {
                 _isSearching.value = false
@@ -198,20 +198,12 @@ class PostViewModel @Inject constructor(
         }
     }
 
-    fun debounceSearch(query: String) {
-        val trimmed = query.trim()
+    fun searchPosts(query: String) {
+        launchSearch(query.trim(), debounceMs = 0L)
+    }
 
-        searchJob?.cancel()
-        searchJob = viewModelScope.launch {
-            delay(500)
-            if (trimmed.isNotEmpty()) {
-                _isSearching.value = true
-                searchPosts(trimmed)
-            } else {
-                _isSearching.value = false
-                refreshPosts(limit = pageSize, skip = 0)
-            }
-        }
+    fun debounceSearch(query: String) {
+        launchSearch(query.trim(), debounceMs = 500L)
     }
 
     fun loadPostDetail(postId: Int) {

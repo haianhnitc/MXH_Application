@@ -125,13 +125,13 @@ class UserViewModel @Inject constructor(
         }
     }
 
-    fun searchUsers(query: String) {
-        val trimmed = query.trim()
-
+    private fun launchSearch(trimmed: String, debounceMs: Long = 0L) {
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
+            if (debounceMs > 0) delay(debounceMs)
+
             currentSkip = 0
-            _userListState.update { it.copy(hasMoreData = true) }  // Reset flag
+            _userListState.update { it.copy(hasMoreData = true) }
 
             if (trimmed.isEmpty()) {
                 _isSearching.value = false
@@ -150,20 +150,12 @@ class UserViewModel @Inject constructor(
         }
     }
 
-    fun debounceSearch(query: String) {
-        val trimmed = query.trim()
+    fun searchUsers(query: String) {
+        launchSearch(query.trim(), debounceMs = 0L)
+    }
 
-        searchJob?.cancel()
-        searchJob = viewModelScope.launch {
-            delay(500)
-            if (trimmed.isNotEmpty()) {
-                _isSearching.value = true
-                searchUsers(trimmed)
-            } else {
-                _isSearching.value = false
-                refreshUsers(limit = pageSize, skip = 0)
-            }
-        }
+    fun debounceSearch(query: String) {
+        launchSearch(query.trim(), debounceMs = 500L)
     }
 
     fun loadUserDetail(userId: Int) {

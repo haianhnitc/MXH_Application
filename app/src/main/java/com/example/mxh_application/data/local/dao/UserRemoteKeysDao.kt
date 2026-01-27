@@ -18,6 +18,4 @@ interface UserRemoteKeysDao {
     @Query("DELETE FROM user_remote_keys")
     suspend fun clearAll() : Int
     
-//    @Query("SELECT lastUpdated FROM user_remote_keys ORDER BY lastUpdated DESC LIMIT 1")
-//    suspend fun getLastUpdated(): Long?
 }
