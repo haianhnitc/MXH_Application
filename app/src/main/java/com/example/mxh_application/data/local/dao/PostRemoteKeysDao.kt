@@ -17,5 +17,5 @@ interface PostRemoteKeysDao {
     
     @Query("DELETE FROM post_remote_keys")
     suspend fun clearAll() : Int
-    
+
 }

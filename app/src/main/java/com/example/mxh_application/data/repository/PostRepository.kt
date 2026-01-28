@@ -34,18 +34,17 @@ class PostRepository @Inject constructor(
         
         try {
             val response = api.getAllPosts(limit, skip)
-            val postEntities = response.posts.toEntityList()
-            postDao.insertPosts(postEntities)
+            val listPostEntities = response.posts.toEntityList()
+            postDao.insertPosts(listPostEntities)
             
-            emit(Resource.Success(postEntities))
+            emit(Resource.Success(listPostEntities))
         } catch (e: Exception) {
             emit(Resource.Error(
                 message = e.localizedMessage ?: "Có lỗi xảy ra"
             ))
         }
     }
-    
-    // Lấy post theo ID từ API và cache
+
     fun fetchAndCachePostById(postId: Int): Flow<Resource<PostEntity>> = flow {
         emit(Resource.Loading())
         
