@@ -228,9 +228,7 @@ class PostViewModel @Inject constructor(
             when (result) {
                 is Resource.Loading -> {}
                 is Resource.Success -> {
-                    // Đã insert vào DB trong Repository -> Flow observeLocalPosts() sẽ tự cập nhật UI.
-                    // Không gọi refreshPosts() để tránh clear DB làm mất post vừa tạo trên DummyJson.
-                    // sao chỗ này không thêm thông báo đã tạo post thành công lên UI vậy
+
                 }
                 is Resource.Error -> {
                     throw Exception(result.message)
