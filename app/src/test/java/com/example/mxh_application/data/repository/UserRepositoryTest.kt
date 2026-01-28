@@ -162,6 +162,51 @@ class UserRepositoryTest {
         coVerify { api.getAllUsers(20, 0) }
     }
 
+    @Test
+    fun `fetchAndCacheUsers falls back to cache when API fails`() = runTest {
+        val cachedUser = UserEntity(
+            id = 99,
+            firstName = "Cached",
+            lastName = "User",
+            email = "cached@example.com",
+            phone = "999",
+            username = "cached",
+            image = "",
+            age = 25,
+            gender = "male",
+            address = null,
+            company = null,
+            bloodGroup = "",
+            height = 170.0,
+            weight = 70.0,
+            postCount = 3,
+            hair = null
+        )
+        dao.insertUser(cachedUser)
+        coEvery { api.getAllUsers(20, 0) } throws RuntimeException("network down")
+
+        val emissions = repository.fetchAndCacheUsers(20, 0).toList()
+
+        // Should emit Loading, then Success with cached data
+        assertTrue(emissions[0] is Resource.Loading)
+        assertTrue(emissions[1] is Resource.Success)
+        val data = (emissions[1] as Resource.Success).data!!
+        assertEquals(1, data.size)
+        assertEquals(99, data.first().id)
+    }
+
+    @Test
+    fun `fetchAndCacheUsers returns error when API fails and cache is empty`() = runTest {
+        coEvery { api.getAllUsers(20, 0) } throws RuntimeException("network down")
+
+        val emissions = repository.fetchAndCacheUsers(20, 0).toList()
+
+        // Should emit Loading, then Error
+        assertTrue(emissions[0] is Resource.Loading)
+        assertTrue(emissions[1] is Resource.Error)
+        assertEquals("network down", (emissions[1] as Resource.Error).message)
+    }
+
     /**
      * Minimal in-memory UserDao for unit tests.
      */
@@ -175,20 +220,21 @@ class UserRepositoryTest {
             flow.value = storage.sortedBy { it.id }
         }
 
-        override fun getAllUsersPaging() = throw UnsupportedOperationException()
+//        override fun getAllUsersPaging() = throw UnsupportedOperationException() // commented: unused
         override fun getAllUsersFlow() = flow
+        override suspend fun getAllUsersOneTime() = storage.sortedBy { it.id }
         override suspend fun getUserById(userId: Int) = storage.firstOrNull { it.id == userId }
-        override fun getUserByIdFlow(userId: Int) = throw UnsupportedOperationException()
-        override fun searchUsers(query: String) = throw UnsupportedOperationException()
+//        override fun getUserByIdFlow(userId: Int) = throw UnsupportedOperationException() // commented: unused
+//        override fun searchUsers(query: String) = throw UnsupportedOperationException() // commented: unused
         override suspend fun searchUsersOneTime(query: String) = storage.filter {
             val q = query.lowercase()
             (it.firstName?.lowercase()?.contains(q) == true) || (it.lastName?.lowercase()?.contains(q) == true)
         }
-        override suspend fun getUserWithPosts(userId: Int) = throw UnsupportedOperationException()
-        override fun getUserWithPostsFlow(userId: Int) = throw UnsupportedOperationException()
+//        override suspend fun getUserWithPosts(userId: Int) = throw UnsupportedOperationException() // commented: unused
+//        override fun getUserWithPostsFlow(userId: Int) = throw UnsupportedOperationException() // commented: unused
         override suspend fun insertUser(user: UserEntity) = upsert(user)
         override suspend fun insertUsers(users: List<UserEntity>) { users.forEach { upsert(it) } }
-        override suspend fun updatePostCount(userId: Int, count: Int) {}
+//        override suspend fun updatePostCount(userId: Int, count: Int) {} // commented: unused
         override suspend fun deleteUserById(userId: Int) { storage.removeAll { it.id == userId }; flow.value = storage }
         override suspend fun clearAll() = storage.clear().let { 0 }
         override suspend fun deleteAllUsers() = clearAll()

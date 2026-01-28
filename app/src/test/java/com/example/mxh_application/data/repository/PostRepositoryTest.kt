@@ -127,23 +127,27 @@ class PostRepositoryTest {
             flow.value = storage.sortedByDescending { it.createdAt }
         }
 
+        override fun getAllPosts(): List<PostEntity> {
+            TODO("Not yet implemented")
+        }
+
         override fun getAllPostsPaging() = throw UnsupportedOperationException()
         override fun getAllPostsFlow() = flow
         override suspend fun getPostById(postId: Int) = storage.firstOrNull { it.id == postId }
         override fun getPostByIdFlow(postId: Int) = throw UnsupportedOperationException()
-        override fun getPostsByUserPaging(userId: Int) = throw UnsupportedOperationException()
+//        override fun getPostsByUserPaging(userId: Int) = throw UnsupportedOperationException() // commented: unused
         override fun getPostsByUserFlow(userId: Int) = throw UnsupportedOperationException()
         override suspend fun getPostsByUserOneTime(userId: Int) = storage.filter { it.userId == userId }
-        override fun searchPosts(query: String) = throw UnsupportedOperationException()
+//        override fun searchPosts(query: String) = throw UnsupportedOperationException() // commented: unused
         override suspend fun searchPostsOneTime(query: String) = storage.filter { it.title.contains(query, ignoreCase = true) }
-        override fun getPostsByTag(tag: String) = throw UnsupportedOperationException()
+//        override fun getPostsByTag(tag: String) = throw UnsupportedOperationException() // commented: unused
         override suspend fun insertPost(post: PostEntity) = upsert(post)
         override suspend fun insertPosts(posts: List<PostEntity>) { posts.forEach { upsert(it) } }
-        override suspend fun deletePostById(postId: Int) = storage.removeAll { it.id == postId }.let { 1 }
+//        override suspend fun deletePostById(postId: Int) = storage.removeAll { it.id == postId }.let { 1 } // commented: unused
         override suspend fun clearAll() = storage.clear().let { 0 }
-        override suspend fun clearPostsByUser(userId: Int) { storage.removeAll { it.userId == userId }; flow.value = storage }
+//        override suspend fun clearPostsByUser(userId: Int) { storage.removeAll { it.userId == userId }; flow.value = storage } // commented: unused
         override suspend fun deleteAllPosts() = clearAll()
-        override suspend fun deletePostsByUserId(userId: Int): Int { clearPostsByUser(userId); return 0 }
+//        override suspend fun deletePostsByUserId(userId: Int): Int { clearPostsByUser(userId); return 0 } // commented: unused
         override suspend fun getPostCount() = storage.size
         override suspend fun getPostCountByUser(userId: Int) = storage.count { it.userId == userId }
     }

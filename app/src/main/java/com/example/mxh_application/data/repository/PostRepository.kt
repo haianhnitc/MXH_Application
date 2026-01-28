@@ -1,10 +1,5 @@
 package com.example.mxh_application.data.repository
 
-import androidx.paging.ExperimentalPagingApi
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
-import androidx.paging.PagingData
-import androidx.paging.PagingSource
 import com.example.mxh_application.data.local.AppDatabase
 import com.example.mxh_application.data.local.dao.PostDao
 import com.example.mxh_application.data.local.entity.PostEntity
@@ -12,7 +7,6 @@ import com.example.mxh_application.data.mapper.toEntity
 import com.example.mxh_application.data.mapper.toEntityList
 import com.example.mxh_application.data.remote.api.DummyJsonApi
 import com.example.mxh_application.data.remote.dto.CreatePostRequest
-import com.example.mxh_application.data.remote.mediator.PostRemoteMediator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
@@ -39,9 +33,14 @@ class PostRepository @Inject constructor(
             
             emit(Resource.Success(listPostEntities))
         } catch (e: Exception) {
-            emit(Resource.Error(
-                message = e.localizedMessage ?: "Có lỗi xảy ra"
-            ))
+            val cachedListPost = postDao.getAllPosts()
+            if(cachedListPost.isNotEmpty()) {
+                emit(Resource.Success(cachedListPost))
+            } else {
+                emit(Resource.Error(
+                    message = e.localizedMessage ?: "Có lỗi xảy ra"
+                ))
+            }
         }
     }
 
@@ -82,12 +81,15 @@ class PostRepository @Inject constructor(
             emit(Resource.Success(postEntities))
         } catch (e: Exception) {
             val localPosts = postDao.getPostsByUserOneTime(userId)
-            emit(Resource.Success(localPosts))
+            if(localPosts.isNotEmpty()) {
+                emit(Resource.Success(localPosts))
+            } else {
+                emit(Resource.Error(message = e.localizedMessage ?: "Có lỗi xảy ra"))
+            }
         }
     }
     
     // Search posts - gọi API, fallback local nếu offline
-    // Approach: Online search API (toàn bộ), Offline search local cache
     fun searchPosts(query: String): Flow<Resource<List<PostEntity>>> = flow {
         val trimmed = query.trim()
         emit(Resource.Loading())
@@ -131,34 +133,9 @@ class PostRepository @Inject constructor(
         return postDao.getAllPostsFlow()
     }
     
-    // Lấy post theo ID từ database
-    fun getPostByIdFromDb(postId: Int): Flow<PostEntity?> {
-        return postDao.getPostByIdFlow(postId)
-    }
-    
     // Lấy posts của user từ database
     fun getPostsByUserFromDb(userId: Int): Flow<List<PostEntity>> {
         return postDao.getPostsByUserFlow(userId)
-    }
-    
-    // phân trang post
-    fun getPostsPagingSource(): PagingSource<Int, PostEntity> {
-        return postDao.getAllPostsPaging()
-    }
-    
-    // phân trang cho post của một user
-    fun getPostsByUserPagingSource(userId: Int): PagingSource<Int, PostEntity> {
-        return postDao.getPostsByUserPaging(userId)
-    }
-
-     // PagingData flow với RemoteMediator (posts tổng)
-    @OptIn(ExperimentalPagingApi::class)
-    fun getPostsPagingData(pageSize: Int = 20): Flow<PagingData<PostEntity>> {
-        return Pager(
-            config = PagingConfig(pageSize = pageSize, enablePlaceholders = false),
-            remoteMediator = PostRemoteMediator(api, database, pageSize),
-            pagingSourceFactory = { postDao.getAllPostsPaging() }
-        ).flow
     }
 
      // Tạo bài viết mới qua API, cache vào DB
@@ -186,17 +163,7 @@ class PostRepository @Inject constructor(
         }
     }
     
-    // Xóa post
-    suspend fun deletePost(postId: Int) {
-        postDao.deletePostById(postId)
-    }
-    
-    // Xóa tất cả posts của một user
-    suspend fun deletePostsByUserId(userId: Int) {
-        postDao.deletePostsByUserId(userId)
-    }
-    
-    // Xóa tất cả posts 
+    // Xóa tất cả posts
     suspend fun clearAllPosts() {
         postDao.deleteAllPosts()
     }

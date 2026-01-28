@@ -40,10 +40,15 @@ class UserRepository @Inject constructor(
 
             emit(Resource.Success(userEntities))
         } catch (e: Exception) {
-            emit(Resource.Error(
-                message = e.localizedMessage ?: "Có lỗi xảy ra",
-                data = null
-            ))
+            val cachedUsers = userDao.getAllUsersOneTime()
+            if(cachedUsers.isNotEmpty()) {
+                emit(Resource.Success(cachedUsers))
+            } else {
+                emit(Resource.Error(
+                    message = e.localizedMessage ?: "Có lỗi xảy ra",
+                    data = null
+                ))
+            }
         }
     }
     
@@ -68,7 +73,6 @@ class UserRepository @Inject constructor(
     }
     
     // Search users - gọi API, fallback local nếu offline
-    // Approach: Online search API (toàn bộ), Offline search local cache
     fun searchUsers(query: String): Flow<Resource<List<UserEntity>>> = flow {
         val trimmed = query.trim()
         emit(Resource.Loading())
@@ -104,43 +108,13 @@ class UserRepository @Inject constructor(
                 }
             }
         } catch (e: Exception) {
-            emit(Resource.Error(e.localizedMessage ?: "Search failed"))
+            emit(Resource.Error(e.localizedMessage ?: "Có lỗi khi tìm kiếm, vui lòng thử lại"))
         }
     }
     
     // Lấy tất cả users từ database (offline-first)
     fun getAllUsersFromDb(): Flow<List<UserEntity>> {
         return userDao.getAllUsersFlow()
-    }
-    
-    // Lấy user theo ID từ database
-    fun getUserByIdFromDb(userId: Int): Flow<UserEntity?> {
-        return userDao.getUserByIdFlow(userId)
-    }
-    
-     // Lấy user với posts (relation)
-    suspend fun getUserWithPosts(userId: Int): UserWithPosts? {
-        return userDao.getUserWithPosts(userId)
-    }
-    
-    // Phân trang
-    fun getUsersPagingSource(): PagingSource<Int, UserEntity> {
-        return userDao.getAllUsersPaging()
-    }
-
-     // PagingData flow với RemoteMediator (online + offline)
-    @OptIn(ExperimentalPagingApi::class)
-    fun getUsersPagingData(pageSize: Int = 20): Flow<PagingData<UserEntity>> {
-        return Pager(
-            config = PagingConfig(pageSize = pageSize, enablePlaceholders = false),
-            remoteMediator = UserRemoteMediator(api, database, pageSize),
-            pagingSourceFactory = { userDao.getAllUsersPaging() }
-        ).flow
-    }
-    
-    // Xóa user
-    suspend fun deleteUser(userId: Int) {
-        userDao.deleteUserById(userId)
     }
     
     // Xóa tất cả users (clear cache)
